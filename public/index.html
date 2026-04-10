@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Whiteboard | SD Lab</title>
+    <style>
+        body { 
+            margin: 0; 
+            background: #f4f7f6; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            overflow: hidden; 
+        }
+        
+        canvas { 
+            display: block; 
+            background: #ffffff; 
+            cursor: crosshair; 
+        }
+
+        #toolbar { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px; 
+            width: 240px;
+            box-sizing: border-box;
+        }
+
+        .room-info { font-size: 14px; color: #7f8c8d; margin-bottom: -8px; }
+        .room-info b { color: #2c3e50; }
+
+        /* --- BULLETPROOF INPUT ALIGNMENT --- */
+        .room-controls { 
+            display: flex; 
+            gap: 8px; 
+        }
+
+        .room-controls input, .room-controls button {
+            height: 40px; 
+            box-sizing: border-box;
+            margin: 0;
+            font-family: inherit; 
+        }
+
+        .room-controls input {
+            flex: 1; 
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid #dcdde1;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .room-controls input:focus { border-color: #3498db; }
+
+        button { 
+            cursor: pointer; 
+            font-weight: 600; 
+            border: none; 
+            border-radius: 8px; 
+            transition: background 0.2s, transform 0.1s; 
+        }
+        button:active { transform: scale(0.96); }
+
+        .join-btn { background: #3498db; color: white; padding: 0 16px; }
+        .join-btn:hover { background: #2980b9; }
+
+        /* --- BULLETPROOF CIRCULAR RINGS --- */
+        .color-picker { display: flex; gap: 10px; align-items: center; }
+
+        .color { 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            cursor: pointer;
+            box-sizing: border-box;
+            box-shadow: 0 0 0 2px transparent;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .color:hover { transform: scale(1.1); }
+
+        .color.active { 
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2c3e50; 
+        }
+
+        .eraser { 
+            border: 1px dashed #bdc3c7; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 12px; 
+            background: #ffffff; 
+        }
+
+        label { font-size: 13px; font-weight: 500; color: #2c3e50; }
+        input[type=range] { width: 100%; margin-top: 8px; accent-color: #3498db; }
+
+        .clear-btn { background: #e74c3c; color: white; padding: 12px; width: 100%; margin-top: 4px; }
+        .clear-btn:hover { background: #c0392b; }
+
+        .status-bar {
+            position: absolute; bottom: 15px; right: 15px;
+            background: #2c3e50; color: white; padding: 8px 15px; border-radius: 20px; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toolbar">
+        <div class="room-info">Room: <b id="roomLabel">general</b></div>
+        
+        <div class="room-controls">
+            <input type="text" id="roomInput" placeholder="New room...">
+            <button class="join-btn" onclick="joinRoom()">Join</button>
+        </div>
+
+        <div class="color-picker">
+            <div class="color active" style="background: #000000;" data-color="#000000"></div>
+            <div class="color" style="background: #e74c3c;" data-color="#e74c3c"></div>
+            <div class="color" style="background: #2ecc71;" data-color="#2ecc71"></div>
+            <div class="color" style="background: #3498db;" data-color="#3498db"></div>
+            <div class="color" style="background: #f1c40f;" data-color="#f1c40f"></div>
+            <div class="color eraser" data-color="#ffffff" title="Eraser">🧹</div>
+        </div>
+        
+        <label>
+            Brush Size: 
+            <input type="range" id="brushSize" min="1" max="20" value="3">
+        </label>
+        
+        <button class="clear-btn" onclick="socket.emit('clear')">Clear Canvas</button>
+    </div>
+
+    <div class="status-bar">
+        <span id="activeUsers">1</span> Users Online | <span id="saveState">Synced</span>
+    </div>
+
+    <canvas id="whiteboard"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
